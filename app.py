@@ -126,7 +126,13 @@ IDIOMAS = {
 # CONFIGURACIÓN DEL MODELO
 # ======================
 MODEL_URL = "https://drive.google.com/uc?export=download&id=TU_ID_DEL_MODELO"  # Reemplaza con tu URL
-MODEL_PATH = "models/mobilenetv2_finetuned.keras"
+
+# Intentar múltiples rutas de modelo
+MODEL_PATHS = [
+    "models/mobilenetv2_finetuned_converted.keras",  # Versión convertida (preferida)
+    "models/mobilenetv2_finetuned.keras",            # Versión original
+    "mobilenetv2_finetuned.keras"                    # En raíz del proyecto
+]
 
 # ======================
 # FUNCIONES DE UTILIDAD
@@ -152,23 +158,56 @@ def descargar_modelo_desde_url(url, path):
 
 @st.cache_resource
 def cargar_modelo():
-    """Carga el modelo de TensorFlow"""
+    """Carga el modelo de TensorFlow - SOLUCIÓN PARA ERROR batch_shape"""
+    
+    # Buscar modelo en múltiples ubicaciones
+    model_path = None
+    for path in MODEL_PATHS:
+        if os.path.exists(path):
+            model_path = path
+            st.info(f"📁 Modelo encontrado en: {path}")
+            break
+    
+    if model_path is None:
+        st.error(f"""
+        ❌ **Modelo no encontrado**
+        
+        Buscado en:
+        {chr(10).join(f'• {path}' for path in MODEL_PATHS)}
+        
+        **Solución:**
+        Asegúrate de que el modelo esté en la carpeta `models/`
+        """)
+        return None
+    
     try:
-        # Intentar cargar desde ruta local primero
-        if os.path.exists(MODEL_PATH):
-            modelo = tf.keras.models.load_model(MODEL_PATH)
-        else:
-            # Si no existe, intentar descargar (opcional)
-            st.warning("Modelo no encontrado en la ruta local. Asegúrate de que el archivo existe.")
-            return None
+        # SOLUCIÓN PRINCIPAL: compile=False evita el error batch_shape
+        st.info("🔄 Cargando modelo...")
+        modelo = tf.keras.models.load_model(model_path, compile=False)
+        
+        # Re-compilar manualmente (necesario después de compile=False)
+        modelo.compile(
+            optimizer='adam',
+            loss='binary_crossentropy',
+            metrics=['accuracy']
+        )
         
         # Verificar que el modelo funciona
-        dummy_input = np.zeros((1, 224, 224, 3))
+        dummy_input = np.zeros((1, 224, 224, 3), dtype=np.float32)
         _ = modelo.predict(dummy_input, verbose=0)
         
+        st.success(f"✅ Modelo cargado correctamente")
         return modelo
+        
     except Exception as e:
-        st.error(f"Error al cargar el modelo: {str(e)}")
+        st.error(f"""
+        ❌ **Error al cargar el modelo**: {str(e)}
+        
+        **Posibles soluciones:**
+        1. Verifica que TensorFlow sea versión 2.15.0+
+        2. Asegúrate de que el archivo del modelo existe
+        3. El modelo debe ser compatible con TensorFlow/Keras
+        """)
         return None
 
 def validar_imagen(img):

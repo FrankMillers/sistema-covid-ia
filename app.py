@@ -733,6 +733,60 @@ def crear_reporte_pdf(imagen, probabilidad, mapa_calor, overlay, id_analisis, id
     
     return archivo_temp.name
 
+def crear_reporte_basico(probabilidad, id_analisis, idioma):
+    """Crea reporte básico en texto plano como fallback"""
+    contenido = f"""
+SISTEMA DE DETECCION COVID-19 - REPORTE DE ANALISIS
+==================================================
+
+ID de Analisis: {id_analisis}
+Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}
+Idioma: {idioma.upper()}
+
+RESULTADOS DEL ANALISIS
+=======================
+
+Probabilidad COVID-19: {probabilidad*100:.2f}%
+Diagnostico: {"POSITIVO para SARS-CoV-2" if probabilidad > 0.5 else "NEGATIVO para SARS-CoV-2"}
+
+INTERPRETACION CLINICA
+======================
+
+{'Alta probabilidad de COVID-19. Se detectan patrones radiologicos consistentes con neumonia por SARS-CoV-2.' if probabilidad > 0.75 else 
+'Probabilidad moderada de COVID-19. Se sugiere evaluacion medica adicional.' if probabilidad > 0.55 else
+'Baja probabilidad de COVID-19. No se detectan patrones tipicos de neumonia por COVID-19.' if probabilidad < 0.35 else
+'Resultado incierto. Se requiere analisis medico adicional.'}
+
+ESTADISTICAS DEL MODELO
+========================
+
+Exactitud General: {ESTADISTICAS_MODELO['exactitud_general']*100:.1f}%
+Precision COVID: {ESTADISTICAS_MODELO['precision_covid']*100:.1f}%
+Sensibilidad: {ESTADISTICAS_MODELO['sensibilidad']*100:.1f}%
+Especificidad: {ESTADISTICAS_MODELO['especificidad']*100:.1f}%
+
+INFORMACION TECNICA
+===================
+
+Modelo: MobileNetV2 Fine-tuned
+Arquitectura: Redes Neuronales Convolucionales
+Resolucion: 224x224 pixeles
+Metodo: Transfer Learning + Fine-tuning
+
+AVISO MEDICO IMPORTANTE
+=======================
+
+Este sistema es una herramienta de apoyo diagnostico. Los resultados
+deben ser interpretados por un profesional medico calificado. No 
+reemplaza el juicio clinico profesional.
+
+===============================================
+Generado por Sistema IA COVID-19
+Fecha de generacion: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}
+===============================================
+"""
+    return contenido
+
 # ======================
 # INTERFAZ PRINCIPAL
 # ======================
@@ -1046,60 +1100,6 @@ def main():
                         )
                     except Exception as e2:
                         st.error(f"Error crítico generando reporte: {str(e2)}")
-
-def crear_reporte_basico(probabilidad, id_analisis, idioma):
-    """Crea reporte básico en texto plano como fallback"""
-    contenido = f"""
-SISTEMA DE DETECCION COVID-19 - REPORTE DE ANALISIS
-==================================================
-
-ID de Analisis: {id_analisis}
-Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}
-Idioma: {idioma.upper()}
-
-RESULTADOS DEL ANALISIS
-=======================
-
-Probabilidad COVID-19: {probabilidad*100:.2f}%
-Diagnostico: {"POSITIVO para SARS-CoV-2" if probabilidad > 0.5 else "NEGATIVO para SARS-CoV-2"}
-
-INTERPRETACION CLINICA
-======================
-
-{'Alta probabilidad de COVID-19. Se detectan patrones radiologicos consistentes con neumonia por SARS-CoV-2.' if probabilidad > 0.75 else 
-'Probabilidad moderada de COVID-19. Se sugiere evaluacion medica adicional.' if probabilidad > 0.55 else
-'Baja probabilidad de COVID-19. No se detectan patrones tipicos de neumonia por COVID-19.' if probabilidad < 0.35 else
-'Resultado incierto. Se requiere analisis medico adicional.'}
-
-ESTADISTICAS DEL MODELO
-========================
-
-Exactitud General: {ESTADISTICAS_MODELO['exactitud_general']*100:.1f}%
-Precision COVID: {ESTADISTICAS_MODELO['precision_covid']*100:.1f}%
-Sensibilidad: {ESTADISTICAS_MODELO['sensibilidad']*100:.1f}%
-Especificidad: {ESTADISTICAS_MODELO['especificidad']*100:.1f}%
-
-INFORMACION TECNICA
-===================
-
-Modelo: MobileNetV2 Fine-tuned
-Arquitectura: Redes Neuronales Convolucionales
-Resolucion: 224x224 pixeles
-Metodo: Transfer Learning + Fine-tuning
-
-AVISO MEDICO IMPORTANTE
-=======================
-
-Este sistema es una herramienta de apoyo diagnostico. Los resultados
-deben ser interpretados por un profesional medico calificado. No 
-reemplaza el juicio clinico profesional.
-
-===============================================
-Generado por Sistema IA COVID-19
-Fecha de generacion: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}
-===============================================
-"""
-    return contenido
         
         except Exception as e:
             st.error(f"{IDIOMAS[idioma]['error_imagen']}: {str(e)}")

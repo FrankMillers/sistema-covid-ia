@@ -12,7 +12,8 @@ import io
 from datetime import datetime
 from fpdf import FPDF
 from scipy import stats
-from sklearn.metrics import confusion_matrix, classification_report, mcnemar
+from sklearn.metrics import confusion_matrix, classification_report
+from scipy.stats import chi2_contingency
 import requests
 import tempfile
 import random
